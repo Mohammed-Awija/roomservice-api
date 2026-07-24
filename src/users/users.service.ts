@@ -32,7 +32,8 @@ export class UsersService {
     const clerkUser = await this.clerk.client.users.getUser(clerkUserId);
 
     const email =
-      clerkUser.emailAddresses[0]?.emailAddress ?? `${clerkUserId}@unknown.local`;
+      clerkUser.emailAddresses[0]?.emailAddress ??
+      `${clerkUserId}@unknown.local`;
     const firstName = clerkUser.firstName ?? null;
     const lastName = clerkUser.lastName ?? null;
 

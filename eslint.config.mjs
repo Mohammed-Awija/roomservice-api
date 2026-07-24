@@ -6,7 +6,9 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs'],
+    // `dist` is compiled build output, not source — linting it produces only
+    // "not found by the project service" parse errors.
+    ignores: ['eslint.config.mjs', 'dist'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

@@ -12,7 +12,7 @@ export class HealthController {
 
     try {
       organizationCount = await this.prisma.organization.count();
-    } catch (error) {
+    } catch {
       dbStatus = 'error';
     }
 

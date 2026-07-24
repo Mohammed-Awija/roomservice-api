@@ -10,9 +10,10 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { LocationsModule } from './locations/locations.module';
 import { OfferingNodesModule } from './offering-nodes/offering-nodes.module';
-import { ModifiersModule } from './modifiers/modifiers.module';
 import { PublicModule } from './public/public.module';
 import { RequestsModule } from './requests/requests.module';
+import { ServiceComponentsModule } from './service-components/service-components.module';
+import { TemplatesModule } from './templates/templates.module';
 
 @Module({
   imports: [
@@ -31,9 +32,10 @@ import { RequestsModule } from './requests/requests.module';
     UsersModule,
     LocationsModule,
     OfferingNodesModule,
-    ModifiersModule,
     PublicModule,
     RequestsModule,
+    ServiceComponentsModule,
+    TemplatesModule,
   ],
   controllers: [AppController],
   providers: [

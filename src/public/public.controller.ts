@@ -29,13 +29,13 @@ export class PublicController {
     );
   }
 
-  // An item's modifier groups
-  @Get('o/:slug/items/:itemId/modifiers')
-  getItemModifiers(
+  // An item's service components
+  @Get('o/:slug/items/:itemId/components')
+  getItemComponents(
     @Param('slug') slug: string,
     @Param('itemId') itemId: string,
   ) {
-    return this.publicService.getItemModifiers(slug, itemId);
+    return this.publicService.getItemComponents(slug, itemId);
   }
 
   @Post('o/:slug/l/:locationId/requests')
@@ -46,7 +46,7 @@ export class PublicController {
   ) {
     return this.publicService.createRequest(slug, locationId, {
       offeringNodeId: dto.offeringNodeId,
-      selections: dto.selections,
+      componentValues: dto.componentValues,
       guestName: dto.guestName,
       notes: dto.notes,
     });

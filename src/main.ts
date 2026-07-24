@@ -4,7 +4,7 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-    // Every route is now prefixed with /api
+  // Every route is now prefixed with /api
   app.setGlobalPrefix('api');
 
   app.useGlobalPipes(
@@ -24,7 +24,8 @@ async function bootstrap() {
     origin: allowedOrigins,
     credentials: true,
   });
-  
+
   await app.listen(process.env.PORT ?? 3001);
 }
-bootstrap();
+// `void`: bootstrap is the top-level entrypoint; nothing awaits it by design.
+void bootstrap();

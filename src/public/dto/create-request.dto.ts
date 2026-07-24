@@ -4,18 +4,7 @@ import {
   IsString,
   IsUUID,
   MaxLength,
-  ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-
-class SelectionDto {
-  @IsString()
-  groupName: string;
-
-  @IsArray()
-  @IsString({ each: true })
-  optionNames: string[];
-}
 
 export class CreatePublicRequestDto {
   @IsUUID()
@@ -23,9 +12,7 @@ export class CreatePublicRequestDto {
 
   @IsArray()
   @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => SelectionDto)
-  selections?: SelectionDto[];
+  componentValues?: unknown[];
 
   @IsString()
   @MaxLength(100)

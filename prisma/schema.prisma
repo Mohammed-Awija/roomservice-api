@@ -42,9 +42,26 @@ enum OfferingNodeType {
   ITEM
 }
 
-enum ModifierSelectionType {
-  SINGLE
-  MULTIPLE
+enum ServiceComponentType {
+  SINGLE_SELECT
+  MULTI_SELECT
+  IMAGE
+  INFO_DISPLAY
+  TIME_RANGE
+  DATE
+  TEXT_FIELD
+  NUMBER
+  GUEST_INFO
+  QUANTITY_PRICED
+  PRICE
+  LINK
+  WIFI_QR
+}
+
+enum ComponentSetBy {
+  GUEST
+  ADMIN
+  NONE
 }
 
 model Organization {
@@ -58,12 +75,40 @@ model Organization {
   memberships       Membership[]
   locations         Location[]
   offeringNodes     OfferingNode[]
-  modifierGroups    ModifierGroup[]
-  modifierOptions   ModifierOption[]
+  serviceComponents ServiceComponent[]
   requests          Request[]
   locationOfferings LocationOffering[]
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+
+  // Design tokens. Null => guests get the built-in default theme.
+  templates           Template[] @relation("OrganizationTemplates")
+  publishedTemplateId String?
+  publishedTemplate   Template?  @relation("PublishedTemplate", fields: [publishedTemplateId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// A named set of design tokens for an organization's guest pages.
+/// The lifecycle (drafts, variants, publishing) lands in a later slice; this
+/// exists now so token storage doesn't have to be migrated later.
+model Template {
+  id             String @id @default(uuid())
+  organizationId String
+  name           String
+  /// Token schema version. Read-time defaulting means a v2 can add fields
+  /// without backfilling existing rows.
+  schemaVersion  Int    @default(1)
+  /// Free-form JSON, but never trusted on read — sanitized against the
+  /// whitelist before it reaches a public page.
+  tokens         Json   @default("{}")
+
+  organization Organization   @relation("OrganizationTemplates", fields: [organizationId], references: [id], onDelete: Cascade)
+  publishedBy  Organization[] @relation("PublishedTemplate")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
 }
 
 model Location {
@@ -92,12 +137,12 @@ model OfferingNode {
   enabled        Boolean          @default(true)
   displayOrder   Int              @default(0)
 
-  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  parent         OfferingNode?      @relation("NodeChildren", fields: [parentId], references: [id], onDelete: Cascade)
-  children       OfferingNode[]     @relation("NodeChildren")
-  modifierGroups ModifierGroup[]
-  requests       Request[]
-  locationLinks  LocationOffering[]
+  organization  Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent        OfferingNode?      @relation("NodeChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children      OfferingNode[]     @relation("NodeChildren")
+  components    ServiceComponent[]
+  requests      Request[]
+  locationLinks LocationOffering[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -123,41 +168,25 @@ model LocationOffering {
   @@index([locationId])
 }
 
-model ModifierGroup {
-  id             String                @id @default(uuid())
+model ServiceComponent {
+  id             String               @id @default(uuid())
   organizationId String
   offeringNodeId String
-  name           String
-  selectionType  ModifierSelectionType @default(SINGLE)
-  required       Boolean               @default(false)
-  displayOrder   Int                   @default(0)
+  type           ServiceComponentType
+  label          String
+  config         Json                 @default("{}")
+  setBy          ComponentSetBy       @default(GUEST)
+  required       Boolean              @default(false)
+  displayOrder   Int                  @default(0)
 
-  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  offeringNode OfferingNode     @relation(fields: [offeringNodeId], references: [id], onDelete: Cascade)
-  options      ModifierOption[]
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  offeringNode OfferingNode @relation(fields: [offeringNodeId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([organizationId])
   @@index([offeringNodeId])
-}
-
-model ModifierOption {
-  id              String @id @default(uuid())
-  organizationId  String
-  modifierGroupId String
-  name            String
-  displayOrder    Int    @default(0)
-
-  organization  Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  modifierGroup ModifierGroup @relation(fields: [modifierGroupId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([organizationId])
-  @@index([modifierGroupId])
 }
 
 model User {
@@ -189,7 +218,8 @@ model Request {
   locationId      String
   offeringNodeId  String? // the tree item ordered
   itemName        String? // snapshot of the item name at order time
-  selections      Json? // snapshot of chosen modifiers
+  selections      Json? // legacy: snapshot of chosen modifiers; reads move to componentValues
+  componentValues Json? // snapshot of the guest's filled-in component values
   status          RequestStatus @default(PENDING)
   guestName       String?
   notes           String?

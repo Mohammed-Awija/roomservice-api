@@ -163,7 +163,7 @@ npx prisma generate
 ### Critical env vars (in `.env`)
 
 ```
-DATABASE_URL=postgresql://roomservice:dev_password_change_me@localhost:6432/roomservice?schema=public
+DATABASE_URL=postgresql://serveyce:dev_password_change_me@localhost:6432/serveyce?schema=public
 CORS_ORIGINS=http://localhost:3000
 PORT=3001
 ```
