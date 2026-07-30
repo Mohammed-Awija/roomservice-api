@@ -15,9 +15,14 @@ async function bootstrap() {
     }),
   );
 
-  // Read allowed origins from env var (comma-separated), fall back to localhost for dev
+  // Read allowed origins from env var (comma-separated), fall back to localhost for dev.
+  // Strip any trailing slash: browsers send `Origin` with no trailing slash, and
+  // enableCors does exact-string match, so `https://site.app/` in the env var would
+  // silently never match `https://site.app` from the browser.
   const allowedOrigins = process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(',').map((s) => s.trim())
+    ? process.env.CORS_ORIGINS.split(',').map((s) =>
+        s.trim().replace(/\/+$/, ''),
+      )
     : ['http://localhost:3000'];
 
   app.enableCors({
